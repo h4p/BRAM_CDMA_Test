@@ -176,14 +176,14 @@ CONFIG.NUM_MI {3} \
 CONFIG.Byte_Size {8} \
 CONFIG.Enable_32bit_Address {false} \
 CONFIG.Memory_Type {True_Dual_Port_RAM} \
-CONFIG.Read_Width_A {64} \
+CONFIG.Read_Width_A {32} \
 CONFIG.Read_Width_B {32} \
-CONFIG.Register_PortA_Output_of_Memory_Primitives {true} \
-CONFIG.Register_PortB_Output_of_Memory_Primitives {true} \
+CONFIG.Register_PortA_Output_of_Memory_Primitives {false} \
+CONFIG.Register_PortB_Output_of_Memory_Primitives {false} \
 CONFIG.Use_Byte_Write_Enable {true} \
 CONFIG.Use_RSTA_Pin {true} \
 CONFIG.Use_RSTB_Pin {true} \
-CONFIG.Write_Width_A {64} \
+CONFIG.Write_Width_A {32} \
 CONFIG.Write_Width_B {32} \
 CONFIG.use_bram_block {Stand_Alone} \
  ] $bram
@@ -197,7 +197,7 @@ CONFIG.SINGLE_PORT_BRAM {1} \
   # Create instance: bram_controller_1, and set properties
   set bram_controller_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.0 bram_controller_1 ]
   set_property -dict [ list \
-CONFIG.DATA_WIDTH {64} \
+CONFIG.DATA_WIDTH {32} \
 CONFIG.ECC_TYPE {0} \
 CONFIG.SINGLE_PORT_BRAM {1} \
  ] $bram_controller_1
@@ -216,7 +216,7 @@ CONFIG.PCW_USE_FABRIC_INTERRUPT {1} \
 CONFIG.PCW_USE_S_AXI_GP0 {0} \
 CONFIG.PCW_USE_S_AXI_HP0 {1} \
 CONFIG.PCW_USE_S_AXI_HP1 {0} \
-CONFIG.PCW_USE_S_AXI_HP2 {1} \
+CONFIG.PCW_USE_S_AXI_HP2 {0} \
 CONFIG.preset {ZedBoard} \
  ] $processing_system7_0
 
@@ -228,7 +228,6 @@ CONFIG.preset {ZedBoard} \
   connect_bd_intf_net -intf_net axi_interconnect_cdma_M00_AXI [get_bd_intf_pins axi_cdma_0/S_AXI_LITE] [get_bd_intf_pins axi_interconnect_cdma/M00_AXI]
   connect_bd_intf_net -intf_net axi_interconnect_cdma_M01_AXI [get_bd_intf_pins axi_interconnect_cdma/M01_AXI] [get_bd_intf_pins bram_controller_0/S_AXI]
   connect_bd_intf_net -intf_net axi_interconnect_mem_M00_AXI [get_bd_intf_pins axi_interconnect_mem/M00_AXI] [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
-  connect_bd_intf_net -intf_net axi_interconnect_mem_M01_AXI [get_bd_intf_pins axi_interconnect_mem/M01_AXI] [get_bd_intf_pins processing_system7_0/S_AXI_HP2]
   connect_bd_intf_net -intf_net axi_interconnect_mem_M02_AXI [get_bd_intf_pins axi_interconnect_mem/M02_AXI] [get_bd_intf_pins bram_controller_1/S_AXI]
   connect_bd_intf_net -intf_net bram_controller_0_BRAM_PORTA [get_bd_intf_pins bram/BRAM_PORTB] [get_bd_intf_pins bram_controller_0/BRAM_PORTA]
   connect_bd_intf_net -intf_net bram_controller_1_BRAM_PORTA [get_bd_intf_pins bram/BRAM_PORTA] [get_bd_intf_pins bram_controller_1/BRAM_PORTA]
@@ -238,17 +237,17 @@ CONFIG.preset {ZedBoard} \
 
   # Create port connections
   connect_bd_net -net axi_cdma_0_cdma_introut [get_bd_pins axi_cdma_0/cdma_introut] [get_bd_pins processing_system7_0/IRQ_F2P]
-  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins axi_cdma_0/m_axi_aclk] [get_bd_pins axi_cdma_0/s_axi_lite_aclk] [get_bd_pins axi_interconnect_cdma/ACLK] [get_bd_pins axi_interconnect_cdma/M00_ACLK] [get_bd_pins axi_interconnect_cdma/M01_ACLK] [get_bd_pins axi_interconnect_cdma/S00_ACLK] [get_bd_pins axi_interconnect_mem/ACLK] [get_bd_pins axi_interconnect_mem/M00_ACLK] [get_bd_pins axi_interconnect_mem/M01_ACLK] [get_bd_pins axi_interconnect_mem/M02_ACLK] [get_bd_pins axi_interconnect_mem/S00_ACLK] [get_bd_pins bram_controller_0/s_axi_aclk] [get_bd_pins bram_controller_1/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK] [get_bd_pins processing_system7_0/S_AXI_HP2_ACLK] [get_bd_pins rst_processing_system7_0_100M/slowest_sync_clk]
+  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins axi_cdma_0/m_axi_aclk] [get_bd_pins axi_cdma_0/s_axi_lite_aclk] [get_bd_pins axi_interconnect_cdma/ACLK] [get_bd_pins axi_interconnect_cdma/M00_ACLK] [get_bd_pins axi_interconnect_cdma/M01_ACLK] [get_bd_pins axi_interconnect_cdma/S00_ACLK] [get_bd_pins axi_interconnect_mem/ACLK] [get_bd_pins axi_interconnect_mem/M00_ACLK] [get_bd_pins axi_interconnect_mem/M01_ACLK] [get_bd_pins axi_interconnect_mem/M02_ACLK] [get_bd_pins axi_interconnect_mem/S00_ACLK] [get_bd_pins bram_controller_0/s_axi_aclk] [get_bd_pins bram_controller_1/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK] [get_bd_pins rst_processing_system7_0_100M/slowest_sync_clk]
   connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_processing_system7_0_100M/ext_reset_in]
   connect_bd_net -net rst_processing_system7_0_100M_interconnect_aresetn [get_bd_pins axi_interconnect_cdma/ARESETN] [get_bd_pins axi_interconnect_mem/ARESETN] [get_bd_pins rst_processing_system7_0_100M/interconnect_aresetn]
   connect_bd_net -net rst_processing_system7_0_100M_peripheral_aresetn [get_bd_pins axi_cdma_0/s_axi_lite_aresetn] [get_bd_pins axi_interconnect_cdma/M00_ARESETN] [get_bd_pins axi_interconnect_cdma/M01_ARESETN] [get_bd_pins axi_interconnect_cdma/S00_ARESETN] [get_bd_pins axi_interconnect_mem/M00_ARESETN] [get_bd_pins axi_interconnect_mem/M01_ARESETN] [get_bd_pins axi_interconnect_mem/M02_ARESETN] [get_bd_pins axi_interconnect_mem/S00_ARESETN] [get_bd_pins bram_controller_0/s_axi_aresetn] [get_bd_pins bram_controller_1/s_axi_aresetn] [get_bd_pins rst_processing_system7_0_100M/peripheral_aresetn]
 
   # Create address segments
-  create_bd_addr_seg -range 0x2000 -offset 0x50000000 [get_bd_addr_spaces axi_cdma_0/Data] [get_bd_addr_segs bram_controller_1/S_AXI/Mem0] SEG_bram_controller_1_Mem0
-  create_bd_addr_seg -range 0x10000000 -offset 0x0 [get_bd_addr_spaces axi_cdma_0/Data] [get_bd_addr_segs processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM] SEG_processing_system7_0_HP0_DDR_LOWOCM
+  create_bd_addr_seg -range 0x2000 -offset 0x60000000 [get_bd_addr_spaces axi_cdma_0/Data] [get_bd_addr_segs bram_controller_1/S_AXI/Mem0] SEG_bram_controller_1_Mem0
+  create_bd_addr_seg -range 0x20000000 -offset 0x0 [get_bd_addr_spaces axi_cdma_0/Data] [get_bd_addr_segs processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM] SEG_processing_system7_0_HP0_DDR_LOWOCM
   create_bd_addr_seg -range 0x10000000 -offset 0x10000000 [get_bd_addr_spaces axi_cdma_0/Data] [get_bd_addr_segs processing_system7_0/S_AXI_HP2/HP2_DDR_LOWOCM] SEG_processing_system7_0_HP2_DDR_LOWOCM
   create_bd_addr_seg -range 0x10000 -offset 0x7E200000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_cdma_0/S_AXI_LITE/Reg] SEG_axi_cdma_0_Reg
-  create_bd_addr_seg -range 0x4000 -offset 0x40000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs bram_controller_0/S_AXI/Mem0] SEG_bram_controller_0_Mem0
+  create_bd_addr_seg -range 0x2000 -offset 0x40000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs bram_controller_0/S_AXI/Mem0] SEG_bram_controller_0_Mem0
 
   # Perform GUI Layout
   regenerate_bd_layout -layout_string {
@@ -259,28 +258,27 @@ preplace port FIXED_IO -pg 1 -y 480 -defaultsOSRD -left
 preplace inst axi_interconnect_mem -pg 1 -lvl 4 -y 130 -defaultsOSRD
 preplace inst rst_processing_system7_0_100M -pg 1 -lvl 2 -y 40 -defaultsOSRD
 preplace inst axi_cdma_0 -pg 1 -lvl 3 -y 90 -defaultsOSRD
-preplace inst bram_controller_0 -pg 1 -lvl 5 -y 340 -defaultsOSRD
+preplace inst bram_controller_0 -pg 1 -lvl 5 -y 1010 -defaultsOSRD
 preplace inst axi_interconnect_cdma -pg 1 -lvl 2 -y 390 -defaultsOSRD
-preplace inst bram_controller_1 -pg 1 -lvl 5 -y 110 -defaultsOSRD
-preplace inst bram -pg 1 -lvl 6 -y 290 -defaultsOSRD
+preplace inst bram_controller_1 -pg 1 -lvl 5 -y 420 -defaultsOSRD
+preplace inst bram -pg 1 -lvl 6 -y 430 -defaultsOSRD
 preplace inst processing_system7_0 -pg 1 -lvl 1 -y 180 -defaultsOSRD
 preplace netloc processing_system7_0_DDR 1 0 2 NJ 460 NJ
-preplace netloc bram_controller_1_BRAM_PORTA 1 5 1 2610
-preplace netloc axi_cdma_0_M_AXI 1 3 1 1930
-preplace netloc bram_controller_0_BRAM_PORTA 1 5 1 2610
+preplace netloc bram_controller_1_BRAM_PORTA 1 5 1 2640
+preplace netloc axi_cdma_0_M_AXI 1 3 1 1910
+preplace netloc bram_controller_0_BRAM_PORTA 1 5 1 2640
 preplace netloc processing_system7_0_M_AXI_GP0 1 1 1 NJ
-preplace netloc axi_interconnect_cdma_M01_AXI 1 2 3 1570 320 N 320 N
-preplace netloc axi_interconnect_cdma_M00_AXI 1 2 1 1560
-preplace netloc processing_system7_0_FCLK_RESET0_N 1 1 1 1090
-preplace netloc axi_interconnect_mem_M02_AXI 1 4 1 2300
-preplace netloc axi_interconnect_mem_M01_AXI 1 0 5 -50 -50 NJ -50 NJ -50 NJ -50 2260
-preplace netloc rst_processing_system7_0_100M_peripheral_aresetn 1 1 4 1140 150 1530 -30 1910 -40 NJ
-preplace netloc axi_cdma_0_cdma_introut 1 0 4 -40 300 NJ 240 NJ 240 1900
+preplace netloc axi_interconnect_cdma_M01_AXI 1 2 3 N 400 N 400 2250
+preplace netloc axi_interconnect_cdma_M00_AXI 1 2 1 1550
+preplace netloc processing_system7_0_FCLK_RESET0_N 1 1 1 1110
+preplace netloc axi_interconnect_mem_M02_AXI 1 4 1 2250
+preplace netloc rst_processing_system7_0_100M_peripheral_aresetn 1 1 4 1130 180 1540 180 1940 290 NJ
+preplace netloc axi_cdma_0_cdma_introut 1 0 4 -60 -60 NJ -60 NJ -60 1900
 preplace netloc processing_system7_0_FIXED_IO 1 0 2 NJ 480 NJ
-preplace netloc rst_processing_system7_0_100M_interconnect_aresetn 1 1 3 1130 140 NJ 10 NJ
-preplace netloc processing_system7_0_FCLK_CLK0 1 0 5 -40 60 1110 130 1540 -10 1940 -30 NJ
-preplace netloc axi_interconnect_mem_M00_AXI 1 0 5 -60 -60 NJ -60 NJ -60 NJ -60 2270
-levelinfo -pg 1 -80 850 1360 1770 2110 2460 2740 2850 -top -70 -bot 530
+preplace netloc rst_processing_system7_0_100M_interconnect_aresetn 1 1 3 1120 150 NJ 10 NJ
+preplace netloc processing_system7_0_FCLK_CLK0 1 0 5 -40 60 1100 130 1560 170 1930 -30 NJ
+preplace netloc axi_interconnect_mem_M00_AXI 1 0 5 -50 -50 NJ -50 NJ -50 NJ -50 2240
+levelinfo -pg 1 -80 850 1360 1770 2090 2460 2790 2900 -top -70 -bot 1130
 ",
 }
 

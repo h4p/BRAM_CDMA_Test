@@ -11,38 +11,33 @@
 #include "xparameters.h"
 #include "xscugic.h"
 #include "xbram.h"
+#include "xtime_l.h"
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-#define NUMBER_OF_TRANSFERS	2
+#define NUMBER_OF_TRANSFERS	4
 #define DMA_CTRL_DEVICE_ID 		XPAR_AXICDMA_0_DEVICE_ID
 #define INTC_DEVICE_ID			XPAR_SCUGIC_SINGLE_DEVICE_ID
 #define DMA_CTRL_IRPT_INTR		XPAR_FABRIC_AXI_CDMA_0_CDMA_INTROUT_INTR
 #define BRAM_CTRL_DEVICE_ID		XPAR_BRAM_CONTROLLER_0_DEVICE_ID
 #define BRAM_CTRL_ADDR			XPAR_BRAM_0_BASEADDR
 
+#define ITERATIONS 2
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 volatile static int Done = 0;	/* Dma transfer is done */
 volatile static int Error = 0;	/* Dma Bus Error occurs */
 
-static u32 SourceAddr 	= 0x00000000;
-static u32 DestAddr 	= 0x10000000;
-static u32 Cdma_SourceAddr = BRAM_CTRL_ADDR;
+volatile static u32 SourceAddr 	= 0x04000000;
+volatile static u32 DestAddr 	= 0x14000000;
 
 
 static XAxiCdma AxiCdmaInstance;	/* Instance of the XAxiCdma */
 static XScuGic IntcController;	/* Instance of the Interrupt Controller */
 
-static int Array_3[32][16];
-static int Array_4[32][16];
-
-static int Array_1[32][16];
-static int Array_2[32][16];
-
-int const input[16] = {0xb504f33, 0xabeb4a0, 0xa267994, 0x987fbfc, 0x8e39d9c, 0x839c3cc, 0x78ad74c, 0x6d743f4, 0x61f78a8, 0x563e6a8, 0x4a5018c, 0x3e33f2c, 0x31f1704, 0x259020c, 0x1917a64, 0xc8fb2c};
-static u32 BUFFER_BYTESIZE	= (XPAR_AXI_CDMA_0_M_AXI_DATA_WIDTH * XPAR_AXI_CDMA_0_M_AXI_MAX_BURST_LEN);
-
+//int const input[16] = {0xb504f33, 0xabeb4a0, 0xa267994, 0x987fbfc, 0x8e39d9c, 0x839c3cc, 0x78ad74c, 0x6d743f4, 0x61f78a8, 0x563e6a8, 0x4a5018c, 0x3e33f2c, 0x31f1704, 0x259020c, 0x1917a64, 0xc8fb2c};
+//static u32 BUFFER_BYTESIZE	= (XPAR_AXI_CDMA_0_M_AXI_DATA_WIDTH * XPAR_AXI_CDMA_0_M_AXI_MAX_BURST_LEN);
+static u32 BUFFER_BYTESIZE	= 32; // wir schreiben 22 Byte
 
 
 
@@ -138,7 +133,6 @@ int XAxiCdma_Interrupt(XScuGic *IntcInstancePtr, XAxiCdma *InstancePtr,
 		XAxiCdma_Config *CfgPtr;
 		int Status;
 		int SubmitTries = 1;		/* Retry to submit */
-		int Tries = NUMBER_OF_TRANSFERS;
 		int Index;
 
 		/* Initialize the XAxiCdma device.
@@ -164,9 +158,8 @@ int XAxiCdma_Interrupt(XScuGic *IntcInstancePtr, XAxiCdma *InstancePtr,
 		 */
 		XAxiCdma_IntrEnable(InstancePtr, XAXICDMA_XR_IRQ_ALL_MASK);
 
-		for (Index = 0; Index < Tries; Index++) {
-			Status = CDMATransfer(InstancePtr,
-				   BUFFER_BYTESIZE, SubmitTries);
+		for (Index = 0; Index < NUMBER_OF_TRANSFERS; Index++) {
+			Status = CDMATransfer(InstancePtr, BUFFER_BYTESIZE, SubmitTries);
 
 			if(Status != XST_SUCCESS) {
 				DisableIntrSystem(IntcInstancePtr, IntrId);
@@ -183,37 +176,6 @@ int XAxiCdma_Interrupt(XScuGic *IntcInstancePtr, XAxiCdma *InstancePtr,
 }
 
 
-int MUL_SHIFT_30(int x, int y)
-{
-  return ((int) (((long long) (x) * (y)) >> 30));
-}
-
-void MULT_SHIFT_LOOP(int Value )
-{
-   int i, j;
-   for (i = 0; i < 32; i++) {
-
-      for (j = 0; j < 16; j++) {
-
-    	  Array_3[i][j] = (int)((MUL_SHIFT_30(input[j],Array_1[j][i])) + Value);
-    	  Array_4[i][j] = (int)((MUL_SHIFT_30(input[j],Array_2[j][i])) + Value);
-      }
-   }
-}
-
-
-void TestPattern_Initialization(void)
-{
-	 int i, j;
-	   for (i = 0; i < 32; i++)
-	   {
-	      for (j = 0; j < 16; j++)
-	      {
-	    	  Array_1[i][j] =  (int ) ((0xA5A5A5A5 >> 1) * i );
-	    	  Array_2[i][j] =  (int ) ((0xA5A5A5A5 << 1) * i );
-	      }
-	   }
-}
 
 /*****************************************************************************/
 /*
@@ -284,12 +246,12 @@ static int CDMATransfer(XAxiCdma *InstancePtr, int Length, int Retries)
 	/* Flush the SrcBuffer before the DMA transfer, in case the Data Cache
 	 * is enabled
 	 */
-	Xil_DCacheFlushRange((u32)Cdma_SourceAddr, Length);
+	Xil_DCacheFlushRange((u32)SourceAddr, Length);
 
 	Status = XAxiCdma_SimpleTransfer(InstancePtr,
-									(u32)(u8 *) (Cdma_SourceAddr ),
-									(u32)(DestAddr),
-									Length,
+									(u32)0x60000000,
+									(u32)DestAddr,
+									Length, // BYTES To Transfer (BTT)
 									Cdma_CallBack,
 									(void *)InstancePtr);
 
@@ -325,11 +287,12 @@ int main()
 	u32  *SrcPtr;
 	u32  *DestPtr;
 	unsigned int  Index;
-	int i, j;
 
 
 
-    printf("\r\n--- Entering main() --- \r\n");
+
+
+    printf("\r\n--- Executing main() ---\r\n");
 
 	/*********************************************************************************
 		Step : 1 : Write TestPattern to DDR
@@ -337,28 +300,16 @@ int main()
 	**********************************************************************************/
     printf("Writing Test Pattern to DDR...");
 
-    TestPattern_Initialization();
 
     /* Initialize the source buffer bytes with a pattern and the
     	 * the destination buffer bytes to zero
    	 */
    	SrcPtr = (u32*)SourceAddr;
    	DestPtr = (u32 *)DestAddr;
-   	for (Index = 0; Index < (BUFFER_BYTESIZE/1024); Index++)
+   	for (Index = 0; Index < BUFFER_BYTESIZE/4; Index++)
    	{
-   		MULT_SHIFT_LOOP((Index*100));
-   		for (i = 0; i < 32; i++)
-   		{
-   			for (j = 0; j < 16; j++)
-   			{
-   				SrcPtr[((i+j))*(Index+1)] 		= Array_3[i][j];
-   				SrcPtr[((i+j)*(Index+1)) + 1] 	= Array_4[i][j];
-   				DestPtr[(i+j)*(Index+1)] 		= 0;
-   				DestPtr[((i+j)*(Index+1)) + 1] = 0;
-   			}
-
-   		}
-
+		SrcPtr[Index] 		= Index;
+		DestPtr[Index] 		= 0;
    	}
    	printf("Done.\n");
 
@@ -367,41 +318,18 @@ int main()
 	**********************************************************************************/
    	printf("Writing Test Pattern to BRAM...");
 
-   	XBram_Config *cfgPtr = XBram_LookupConfig(BRAM_CTRL_DEVICE_ID);
-	if (!cfgPtr) {
-		return XST_FAILURE;
-	}
-
-	XBram myBram;
-	myBram.Config = *cfgPtr;
-	myBram.IsReady = 1;
-
-	if (XST_SUCCESS != XBram_CfgInitialize( &myBram, cfgPtr, cfgPtr->CtrlBaseAddress) )
-	{
-		printf("XBram_CfgInitialize: Failed\r\n");
-		return XST_FAILURE;
-	}
-
-	XBram_InterruptEnable(&myBram, XBRAM_IR_ALL_MASK);
-
-
-   	for (Index = 0; Index < (BUFFER_BYTESIZE/1024); Index++)
+   	u32* bram_addr = (u32*)XPAR_BRAM_CONTROLLER_0_S_AXI_BASEADDR;
+   	for (Index = 0; Index < BUFFER_BYTESIZE/4; Index++)
    	{
-   		MULT_SHIFT_LOOP((Index*100));
-   		for (i = 0; i < 32; i++)
-   		{
-   			for (j = 0; j < 16; j++)
-   			{
-   				// XBram_WriteReg( BaseAddress, RegOffset, u32_Data )
-   				XBram_WriteReg(BRAM_CTRL_ADDR, ((i+j))*(Index+1), Array_3[i][j]);
-   				XBram_WriteReg(BRAM_CTRL_ADDR, ((i+j))*(Index+1) + 1, Array_4[i][j]);
-
-   			}
-
-   		}
-
+		bram_addr[Index] = SrcPtr[Index];
    	}
+
+   	/*for (Index = 0; Index < BUFFER_BYTESIZE/4; Index++)
+   	{
+   		printf("%d\r\n", bram_addr[Index]);
+   	}*/
    	printf("Done.\n");
+
 
 	/*********************************************************************************
 		Step : 3 : AXI CDMA Intialization
@@ -412,9 +340,9 @@ int main()
 			       Start the CDMA
 			   	   Wait for the Interrupt and return the status
 	**********************************************************************************/
-   	printf("Reading Testpattern from BRAM to DDR...");
+  	printf("Reading Testpattern from BRAM...");
 
-    Status = XAxiCdma_Interrupt( &IntcController,
+    Status = XAxiCdma_Interrupt(&IntcController,
     							&AxiCdmaInstance,
     							DMA_CTRL_DEVICE_ID,
    								DMA_CTRL_IRPT_INTR
@@ -426,26 +354,37 @@ int main()
     		return XST_FAILURE;
 	}
 
-	xil_printf("XAxiCdma_Interrupt: Passed\r\n");
 
-	printf("Done\n");
+/*   	for (Index = 0; Index < BUFFER_BYTESIZE/4; Index++)
+   	{
+		DestPtr[Index] = bram_addr[Index];
+   	}
+	printf("Done\n");*/
 
 
     /*********************************************************************************
 		Step : 4 : Compare Source memory with Destination memory
 				   Return the Status
 	**********************************************************************************/
-    	for (Index = 0; Index < (BUFFER_BYTESIZE/4); Index++)
-    	{
-    		if ( DestPtr[Index] != SrcPtr[Index])
-    		{
-    			printf("Error in Comparison : Index : %x \n\r", Index);
-    			return XST_FAILURE;
-    		}
-    	}
+	printf("Comparing Source memory with Destination memory\n");
 
-    	printf("DMA Transfer is Successful \n\r");
-    	return XST_SUCCESS;
+	for (Index = 0; Index < BUFFER_BYTESIZE/4; Index++)
+	{
+		u32 a = SrcPtr[Index];
+		u32 b = DestPtr[Index];
+		if ( b != a )
+		{
+			//printf("Error in Comparison : Index : %x \n\r", Index);
+			printf("Contents in Src:%p and Dst:%p differ (%d != %d)!\n", &SrcPtr[Index], &DestPtr[Index], SrcPtr[Index], DestPtr[Index]);
+			//return XST_FAILURE;
+		}
+		else {
+			printf("Contents in Src:%p and Dst:%p are equal!\n", &SrcPtr[Index], &DestPtr[Index]);
+		}
+	}
+
+	printf("DMA Transfer is Successful \n\r");
+	return XST_SUCCESS;
 
 
 
